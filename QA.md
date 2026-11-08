@@ -22,6 +22,8 @@
 
 ## Workers 배포 및 휴대폰 앱 화면 개편
 
+단독 사용 가로 화면 수정: 667×375 / 844×390 / 740×320 / 1024×768 / 1180×820에서 페이지 가로·세로 스크롤 없음, 양 팀 득점 영역과 네 개 조작 버튼 뷰포트 안에 위치, 득점 안내 잘림 없음 검증. 낮은 높이에서는 점수 폰트를 줄이고, 전체 화면 버튼은 지원 브라우저에서 가로 방향 잠금을 요청함. 설정 패널은 자체 스크롤 허용.
+
 - `wrangler deploy --dry-run` 성공. SQLite Durable Object 마이그레이션과 Workers Assets 구성.
 - 공개 URL `https://courtside-pickleball.ithaca74.workers.dev` 배포 성공.
 - `scripts/verify-deployment.mjs`로 workerd 로컬 및 공개 배포 모두 통과: 잘못된 입력 400, 무권한 수정 403, 두 번째 표시 기기 연결 409, WebSocket ping/pong, QR 로딩, 모바일 tap, 점수 전달, 오프라인 재연결, 새로고침 복구, 되돌리기, 상태 수정.

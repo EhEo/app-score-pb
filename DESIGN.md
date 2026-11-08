@@ -23,6 +23,8 @@ Button (primary, secondary, danger, disabled, focus-visible), labeled input/sele
 Touch revision: entire score and action caption form one native button, >=200px high on phones and >=260px on tablets; the team heading remains a stable noninteractive label. Official receiving team's action states server/service change rather than promising +1. Numeric correction uses 56px minus/plus buttons around a 64px numeric input, preserving direct keyboard editing. Zero/9999 bounds disable the relevant button. Action grids have 8px gutters and 48px minimum targets. Phone toolbar is a three-column grid, score panels have no nested controls. Modal footer remains visible inside its scroll container. No hover-only interaction; press state has an inset outline. Tap feedback is available through optional device vibration. Tablets use up to 1320px content width; landscape with short height reduces header spacing. No controls are introduced on linked viewer score panels.
 
 ## 6. Motion
+
+Standalone landscape revision: bound the body to 100dvh, hide document overflow, and use main rows auto/minmax(0,1fr)/auto. Two score panels span the wide middle row; service and four controls share the bottom row. Short landscape headers compress to 44px; numeric type follows viewport height. Optional game chips and repeated hints are omitted from the court surface; result panels overlay the middle region, keeping the control dock reachable. Only modal content may scroll. Fullscreen button requests landscape orientation when supported; rotation remains user-controlled in browsers without orientation locking.
 Only button press feedback; no continuous movement or flashing. Respect reduced motion. Focus ring visible on keyboard navigation.
 
 ## 7. Responsive & Accessibility

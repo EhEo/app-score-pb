@@ -46,6 +46,7 @@ function render() {
   document.body.classList.toggle('viewer', viewer);
   const s = state();
   document.body.classList.toggle('active-match', Boolean(s));
+  document.body.classList.toggle('standalone-match', Boolean(s) && !viewer && !session?.room);
   if (!s) {
     $('#app').innerHTML = viewer ? `<section class="waiting"><h1>점수판 연결 중</h1><p id="viewer-error">경기 코드를 확인하고 있습니다.</p><a href="/">처음으로 돌아가기</a></section>` : `<section class="welcome"><div><span class="eyebrow">코트에선, 경기에만 집중</span><h1>준비됐나요?<br>한 게임 시작해요.</h1><p>랠리 승리 팀을 터치하면<br>점수와 서브 순서는 알아서.</p></div><div class="court-art" aria-hidden="true"><span>0</span><span>0</span></div></section><div class="intro-actions"><button class="primary start-button" id="new"><span>새 경기 시작</span><span aria-hidden="true">↗</span></button><div class="home-secondary"><button id="join"><span aria-hidden="true">▣</span> 표시용 태블릿 연결 <span aria-hidden="true">›</span></button><button id="history"><span aria-hidden="true">↶</span> 경기 기록 <span aria-hidden="true">›</span></button></div></div><aside class="home-note"><strong>혼자서도, 함께 연결해서도</strong><p>공식 규칙 · 자유 점수 / 단식 · 복식<br>로그인 없이 바로 사용할 수 있어요.</p></aside>`;
     bind('#new', setup); bind('#join', join); bind('#history', showHistory); status(); return;
@@ -190,7 +191,7 @@ function speak(s) {
 async function keepAwake() {
   try { if (!navigator.wakeLock) return toast('이 브라우저는 화면 켜짐 유지를 지원하지 않습니다. 기기 화면 꺼짐 설정을 변경해 주세요.'); wakeLock=await navigator.wakeLock.request('screen');toast('화면 켜짐 유지를 요청했습니다.'); } catch {toast('화면 켜짐 유지가 허용되지 않았습니다.');}
 }
-$('#fullscreen').onclick = async () => { try { if(document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); } catch {toast('이 기기에서는 홈 화면에 추가한 뒤 전체 화면으로 사용해 주세요.');} };
+$('#fullscreen').onclick = async () => { try { if(document.fullscreenElement) {screen.orientation?.unlock?.();await document.exitFullscreen();} else {await document.documentElement.requestFullscreen();if(!viewer&&!session?.room&&state()&&screen.orientation?.lock){try{await screen.orientation.lock('landscape');}catch{toast('기기를 가로로 돌려 사용해 주세요.');}}} } catch {toast('기기를 가로로 돌려주세요. 홈 화면에 추가하면 더 넓게 사용할 수 있습니다.');} };
 window.addEventListener('online', () => {if(viewer&&!viewerClosed)connectViewer();else sync();});
 window.addEventListener('offline', () => {online=false;status();});
 document.addEventListener('visibilitychange', () => { if(!document.hidden) {if(viewer&&!viewerClosed)connectViewer();else sync(); if(wakeLock?.released) keepAwake();} });

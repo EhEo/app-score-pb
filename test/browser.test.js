@@ -24,6 +24,17 @@ test('real Chrome: mobile setup, tablet sync, authorization, offline restore, un
     assert.equal(await page.locator('[data-rally="0"] .tap-action').textContent(),'＋ 1점 득점');
     assert.match(await page.locator('[data-rally="1"] .tap-action').textContent(),/서브권 이동/);
     assert.ok((await page.locator('[data-rally="0"]').boundingBox()).height>=200);
+    for (const [width,height] of [[667,375],[844,390],[740,320],[1024,768],[1180,820]]) {
+      await page.setViewportSize({width,height});
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollHeight>innerHeight||document.documentElement.scrollWidth>innerWidth),false,`standalone scroll ${width}x${height}`);
+      for (const selector of ['[data-rally="0"]','[data-rally="1"]','#undo','#swap','#correct','#more']) {
+        const box=await page.locator(selector).boundingBox();assert.ok(box&&box.y>=0&&box.y+box.height<=height+1,`${selector} outside standalone ${width}x${height}`);
+      }
+      const target=await page.locator('[data-rally="0"]').boundingBox(),caption=await page.locator('[data-rally="0"] .tap-action').boundingBox();
+      assert.ok(caption.y+caption.height<=target.y+target.height,`clipped rally action ${width}x${height}`);
+      await page.screenshot({path:`artifacts/standalone-${width}x${height}.png`,fullPage:true});
+    }
+    await page.setViewportSize({width:390,height:844});
     await page.locator('[data-rally="0"]').tap();
     assert.equal(await page.locator('.score').first().textContent(),'1');
     await page.getByRole('button',{name:'태블릿 연결',exact:true}).click();
