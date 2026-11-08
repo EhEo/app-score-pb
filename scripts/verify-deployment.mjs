@@ -1,0 +1,61 @@
+import assert from 'node:assert/strict';
+import { mkdir } from 'node:fs/promises';
+import { chromium } from '@playwright/test';
+import WebSocket from 'ws';
+import { createMatch } from '../public/engine.js';
+
+const origin = process.argv[2] || 'http://127.0.0.1:8787';
+const config = {mode:'official',kind:'doubles',target:11,winByTwo:true,bestOf:1,firstTeam:0,firstPlayers:[0,0],teams:[{name:'A팀',players:['A 선수 1','A 선수 2']},{name:'B팀',players:['B 선수 1','B 선수 2']}]};
+const post = body=>fetch(`${origin}/api/rooms`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+const invalid=await post({revision:0,state:{}});assert.equal(invalid.status,400);
+const packet={revision:0,state:createMatch(config)};
+const created=await post(packet);assert.equal(created.status,201);const room=await created.json();
+const unauthorized=await fetch(`${origin}/api/rooms/${room.code}`,{method:'PUT',body:'{}'});assert.equal(unauthorized.status,403);
+const malformed=await fetch(`${origin}/api/rooms/${room.code}`,{method:'PUT',headers:{Authorization:`Bearer ${room.token}`},body:'{'});assert.equal(malformed.status,400);
+const wsurl=origin.replace(/^http/,'ws');
+const first=new WebSocket(`${wsurl}/api/rooms/${room.code}/socket?viewer=verification`);
+const initial=await new Promise((resolve,reject)=>{first.once('message',data=>resolve(JSON.parse(data.toString())));first.once('error',reject);});
+assert.equal(initial.revision,0);
+const second=new WebSocket(`${wsurl}/api/rooms/${room.code}/socket?viewer=another`);
+const status=await new Promise((resolve,reject)=>{second.once('unexpected-response',(_req,res)=>{res.resume();second.terminate();resolve(res.statusCode);});second.once('error',()=>{});second.once('open',()=>reject(new Error('Second viewer incorrectly accepted')));});assert.equal(status,409);
+first.send('ping');const pong=await new Promise(resolve=>first.once('message',data=>resolve(data.toString())));assert.equal(pong,'pong');first.close();
+const browser=await chromium.launch({channel:'chrome',headless:true});
+try {
+  await mkdir('artifacts',{recursive:true});
+  const context=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true,serviceWorkers:'block'});
+  const page=await context.newPage(), errors=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.goto(origin);await page.screenshot({path:'artifacts/worker-mobile-home.png',fullPage:true});
+  await page.getByRole('button',{name:'새 경기 시작',exact:true}).tap();
+  await page.screenshot({path:'artifacts/worker-mobile-setup.png',fullPage:true});
+  await page.locator('#setup button.primary').tap();
+  await page.locator('[data-rally="0"]').tap();
+  await page.getByRole('button',{name:'태블릿 연결',exact:true}).tap();
+  const code=await page.locator('.pair-code').textContent();
+  await page.waitForFunction(()=>document.querySelector('.qr')?.naturalWidth>0);
+  const qr=await page.locator('.qr').evaluate(img=>({loaded:img.complete,width:img.naturalWidth}));
+  assert.ok(qr.loaded&&qr.width>0,'QR should load');
+  await page.getByRole('button',{name:'창 닫기'}).tap();
+  const tablet=await browser.newContext({viewport:{width:1180,height:820},serviceWorkers:'block'});
+  const view=await tablet.newPage();view.on('pageerror',error=>errors.push(error.message));
+  await view.goto(`${origin}/?watch=${code}`);await view.waitForFunction(()=>document.querySelector('.score')?.textContent==='1');
+  await page.locator('[data-rally="0"]').tap();await view.waitForFunction(()=>document.querySelector('.score')?.textContent==='2');
+  assert.equal(await view.locator('[data-rally]').count(),0);
+  await context.setOffline(true);await page.locator('[data-rally="0"]').tap();
+  await context.setOffline(false);await page.reload();await view.waitForFunction(()=>document.querySelector('.score')?.textContent==='3');
+  await page.getByRole('button',{name:'되돌리기'}).tap();await view.waitForFunction(()=>document.querySelector('.score')?.textContent==='2');
+  await page.screenshot({path:'artifacts/worker-mobile-score.png',fullPage:true});await view.screenshot({path:'artifacts/worker-tablet-score.png',fullPage:true});
+  for (const [width,height] of [[360,740],[390,844],[430,932],[768,1024],[844,390]]) {
+    await page.setViewportSize({width,height});
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`horizontal overflow ${width}x${height}`);
+    if (width<=430) assert.ok(await page.evaluate(()=>document.querySelector('#more').getBoundingClientRect().bottom<=innerHeight+1),`dock below viewport ${width}x${height}`);
+    await page.screenshot({path:`artifacts/worker-${width}x${height}.png`,fullPage:true});
+  }
+  await page.setViewportSize({width:390,height:844});
+  await page.getByRole('button',{name:'상태 수정',exact:true}).tap();
+  await page.getByRole('button',{name:'A팀 점수 1점 증가',exact:true}).tap();
+  assert.equal(await page.locator('[name=score0]').inputValue(),'3');
+  await page.screenshot({path:'artifacts/worker-mobile-correction.png',fullPage:true});
+  await page.locator('#correction button.primary').tap();await view.waitForFunction(()=>document.querySelector('.score')?.textContent==='3');
+  assert.deepEqual(errors,[]);
+  console.log(`PASS ${origin}: Workers validation, WebSocket exclusivity, QR, mobile tap, sync, offline recovery, undo, correction, phone/tablet/landscape layout.`);
+} finally {await browser.close();}

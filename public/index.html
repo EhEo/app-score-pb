@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101512"><meta name="description" content="휴대폰으로 조작하고 태블릿으로 함께 보는 피클볼 점수판">
+  <link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/icon.svg"><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/mobile.css">
+  <title>COURTSIDE · 피클볼 점수판</title><script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="/" aria-label="코트사이드 홈"><span class="brand-mark" aria-hidden="true">◒</span><span>코트사이드<small>피클볼 점수판</small></span></a><div class="toolbar"><span id="connection" class="badge">단독 사용</span><button id="fullscreen" class="compact" aria-label="전체 화면">⛶</button></div></header>
+  <main id="app"></main>
+  <footer class="footer"><span>KEEP YOUR EYES ON THE GAME.</span><span>점수는 정확하게, 경기는 즐겁게.</span></footer>
+  <dialog id="modal"><div class="dialog-head"><h2 id="modal-title"></h2><button id="close-modal" class="compact" aria-label="창 닫기">닫기 ×</button></div><div id="modal-body"></div></dialog>
+  <div id="toast" role="status" class="toast" hidden></div>
+</body></html>
