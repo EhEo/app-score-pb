@@ -1,4 +1,4 @@
-const CACHE='courtside-v4';
+const CACHE='courtside-v5';
 const SHELL=['/','/index.html','/app.js','/engine.js','/style.css','/mobile.css','/icon.svg','/manifest.webmanifest'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)));self.skipWaiting();});
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));

@@ -25,7 +25,7 @@ try {
   const context=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true,serviceWorkers:'block'});
   const page=await context.newPage(), errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto(origin);await page.screenshot({path:'artifacts/worker-mobile-home.png',fullPage:true});
-  await page.getByRole('button',{name:'새 경기 시작',exact:true}).tap();
+  await page.getByRole('button',{name:'단독 사용',exact:true}).tap();
   await page.screenshot({path:'artifacts/worker-mobile-setup.png',fullPage:true});
   await page.locator('#setup button.primary').tap();
   await page.locator('[data-rally="0"]').tap();
